@@ -252,8 +252,253 @@ sequenceDiagram
   UI->>S: storage/retrieve(...)
   S-->>UI: {url:"file:///…/Q1_Report.pdf", metadata:{…}}
 ```
+---
+Below are **all the JSON-RPC example workflows and their accompanying diagrams**, reproduced in full.
+
+> **Note:** These examples are part of the in-house MCP Storage Extension specification and not publicly documented elsewhere. Searches for related public specifications did not yield any matching example scenarios; the examples below come directly from the original document.  
 
 ---
+
+## Scenario 2: Enterprise Document Management
+
+**Workflow Steps**  
+```json
+# Store
+{ "jsonrpc":"2.0","id":1,
+  "method":"storage/store",
+  "params":{
+    "filename":"Q1_Report.pdf",
+    "data":"JVBERi0xLjQKJ...",  
+    "access":{"visibility":"restricted","authorized_users":["alice","bob"]}
+  }
+}
+
+# Check-in
+{ "jsonrpc":"2.0","id":2,
+  "method":"storage/checkin",
+  "params":{"storage_id":"abc123","status":"available"}
+}
+
+# Retrieve
+{ "jsonrpc":"2.0","id":3,
+  "method":"storage/retrieve",
+  "params":{"storage_id":"abc123"}
+}
+```
+
+```mermaid
+sequenceDiagram
+  participant UI as AI Assistant
+  participant S as MCP Storage Service
+  UI->>S: storage/store(...)
+  S-->>UI: {storage_id:"abc123",status:"pending"}
+  UI->>S: storage/checkin(...)
+  S-->>UI: {success:true}
+  UI->>S: storage/retrieve(...)
+  S-->>UI: {url:"file:///…/Q1_Report.pdf",metadata:{…}}
+```
+
+---
+
+## Scenario 3: Collaborative Data Pipeline
+
+**Workflow Steps**  
+```json
+# Agent A store
+{ "jsonrpc":"2.0","id":10,
+  "method":"storage/store",
+  "params":{
+    "filename":"raw_sensor_data.csv",
+    "data":"SGVsbG8sIFdvcmxkIQ==",
+    "estimated_availability":"2025-04-24T10:10:00Z",
+    "access":{"visibility":"restricted","authorized_users":["AgentB"]}
+  }
+}
+
+# Agent B check-in
+{ "jsonrpc":"2.0","id":11,
+  "method":"storage/checkin",
+  "params":{
+    "storage_id":"data123",
+    "status":"available",
+    "url":"file:///var/mcp/storage/data123/clean_sensor_data.csv"
+  }
+}
+
+# Agent B retrieve
+{ "jsonrpc":"2.0","id":12,
+  "method":"storage/retrieve",
+  "params":{"storage_id":"data123"}
+}
+```
+
+```mermaid
+sequenceDiagram
+  participant A as Agent A
+  participant S as MCP Storage Service
+  participant B as Agent B
+  A->>S: storage/store(raw CSV, est=10:10)
+  S-->>A: {storage_id:"data123",status:"pending"}
+  Note over B,S: waits until 10:10
+  B->>S: storage/checkin(data123,"available",url)
+  S-->>B: {success:true}
+  B->>S: storage/retrieve(data123)
+  S-->>B: {url:"…/clean_sensor_data.csv",metadata:{…}}
+```
+
+---
+
+## Scenario 4: Offline Edge Sync
+
+**Workflow Steps**  
+```json
+# Store metadata only
+{ "jsonrpc":"2.0","id":6,
+  "method":"storage/store",
+  "params":{
+    "filename":"iot_log_42.bin",
+    "estimated_availability":"2025-04-24T18:00:00Z",
+    "access":{"visibility":"private","authorized_users":["edgeNode42"]}
+  }
+}
+
+# Check-in on reconnect
+{ "jsonrpc":"2.0","id":7,
+  "method":"storage/checkin",
+  "params":{
+    "storage_id":"log42",
+    "status":"available",
+    "url":"file:///mnt/logs/iot_log_42.bin"
+  }
+}
+```
+
+```mermaid
+sequenceDiagram
+  participant D as Edge Device
+  participant S as MCP Storage Service
+  D->>S: storage/store(metadata only)
+  S-->>D: {storage_id:"log42",status:"pending"}
+  Note over D: offline; cache locally
+  D->>S: storage/checkin(log42,"available",url)
+  S-->>D: {success:true}
+```
+
+---
+
+## Scenario 5: Xbox Live Game Asset Sync
+
+**Workflow Steps**  
+```json
+# Publisher store
+{ "jsonrpc":"2.0","id":20,
+  "method":"storage/store",
+  "params":{
+    "filename":"skin_bundle_v5.zip",
+    "estimated_availability":"2025-04-30T02:00:00Z",
+    "access":{"visibility":"restricted","authorized_users":["Title123"]}
+  }
+}
+
+# Client check-in
+{ "jsonrpc":"2.0","id":21,
+  "method":"storage/checkin",
+  "params":{
+    "storage_id":"skinBundle5",
+    "status":"available",
+    "url":"https://xblcdn.microsoft.com/skins/skin5.zip"
+  }
+}
+
+# Client retrieve
+{ "jsonrpc":"2.0","id":22,
+  "method":"storage/retrieve",
+  "params":{"storage_id":"skinBundle5"}
+}
+```
+
+```mermaid
+sequenceDiagram
+  participant CP as Content Pipeline
+  participant AS as MCP Asset Service
+  participant XB as Xbox Live Client
+  CP->>AS: storage/store(...)
+  AS-->>CP: {storage_id:"skinBundle5",status:"pending"}
+  Note over XB: wait until rollout
+  XB->>AS: storage/checkin(...)
+  AS-->>XB: {success:true}
+  XB->>AS: storage/retrieve(...)
+  AS-->>XB: {url:"file:///game/cache/skin5.zip",metadata:{…}}
+```
+
+---
+
+## Scenario 6: Game Development Tool Integration
+
+**Workflow Steps**  
+```json
+# Level Designer store
+{ "jsonrpc":"2.0","id":30,
+  "method":"storage/store",
+  "params":{
+    "filename":"level_geo_v2.obj",
+    "estimated_availability":"2025-04-25T03:00:00Z",
+    "access":{"visibility":"private","authorized_users":["buildPipeline"]}
+  }
+}
+
+# Build Orchestrator check-in
+{ "jsonrpc":"2.0","id":31,
+  "method":"storage/checkin",
+  "params":{
+    "storage_id":"geo456",
+    "status":"available",
+    "url":"file:///assets/level_geo_v2.obj"
+  }
+}
+
+# Build Orchestrator retrieve
+{ "jsonrpc":"2.0","id":32,
+  "method":"storage/retrieve",
+  "params":{"storage_id":"geo456"}
+}
+```
+
+```mermaid
+flowchart TD
+  A[AI Level Designer] -->|storage/store| S[MCP Storage Service]
+  S -->|schedule timeout| T[Timeout Scheduler]
+  A -->|notify when done| S:storage/checkin
+  S -->|publish event| BO[Build Orchestrator]
+  BO -->|storage/retrieve| S
+  BO -->|include in nightly build| Build[Game Build Pipeline]
+```
+
+---
+
+## Branching, Merging & Version Listing Examples
+
+```json
+# Branch a new version off v1
+{ "jsonrpc":"2.0","id":4,
+  "method":"storage/store",
+  "params":{
+    "filename":"cleaned_data.parquet",
+    "parent_version_id":"v1",
+    "access":{"visibility":"private","authorized_users":["teamA"]}
+  }
+}
+
+# List all versions
+{ "jsonrpc":"2.0","id":5,
+  "method":"storage/list_versions",
+  "params":{"storage_id":"abc123"}
+}
+```
+
+---
+
+*All example JSON-RPC calls and diagrams are reproduced exactly as originally specified.*
 
 ## 11. Branching, Merging & Version Listing Examples  
 ```json
