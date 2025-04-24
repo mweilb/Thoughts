@@ -252,12 +252,7 @@ sequenceDiagram
   UI->>S: storage/retrieve(...)
   S-->>UI: {url:"file:///…/Q1_Report.pdf", metadata:{…}}
 ```
----
-Below are **all the JSON-RPC example workflows and their accompanying diagrams**, reproduced in full.
-
-> **Note:** These examples are part of the in-house MCP Storage Extension specification and not publicly documented elsewhere. Searches for related public specifications did not yield any matching example scenarios; the examples below come directly from the original document.  
-
----
+ 
 
 ## Scenario 2: Enterprise Document Management
 
@@ -379,7 +374,7 @@ sequenceDiagram
   participant S as MCP Storage Service
   D->>S: storage/store(metadata only)
   S-->>D: {storage_id:"log42",status:"pending"}
-  Note over D: offline; cache locally
+  Note over D: offline cache locally
   D->>S: storage/checkin(log42,"available",url)
   S-->>D: {success:true}
 ```
